@@ -18,7 +18,10 @@ const AudioScriptureAlignmentPlayer = ({
   const [selectedAudioTokens, setSelectedAudioTokens] = useState([]);
   const [selectedSourceTokens, setSelectedSourceTokens] = useState([]);
   const [alignments, setAlignments] = useState([]);
+  const [alignedTokens, setAlignedTokens] = useState({ audio: [], source: [] });
+  const [hoveredAlignment, setHoveredAlignment] = useState(null);
   const audioRef = useRef(null);
+  const alignmentsRef = useRef(null);
 
   useEffect(() => {
     const updateActiveTokens = () => {
@@ -56,12 +59,14 @@ const AudioScriptureAlignmentPlayer = ({
   };
 
   const handleAudioTokenClick = (token) => {
+    if (alignedTokens.audio.includes(token.id)) return;
     setSelectedAudioTokens((prev) =>
       prev.includes(token) ? prev.filter((t) => t !== token) : [...prev, token],
     );
   };
 
   const handleSourceTokenClick = (token) => {
+    if (alignedTokens.source.includes(token.id)) return;
     setSelectedSourceTokens((prev) =>
       prev.includes(token) ? prev.filter((t) => t !== token) : [...prev, token],
     );
@@ -69,7 +74,6 @@ const AudioScriptureAlignmentPlayer = ({
 
   const createAlignment = () => {
     if (selectedAudioTokens.length === 0 || selectedSourceTokens.length === 0) {
-      alert("Please select at least one audio token and one source token.");
       return;
     }
 
@@ -80,8 +84,47 @@ const AudioScriptureAlignmentPlayer = ({
     };
 
     setAlignments([...alignments, newAlignment]);
+    setAlignedTokens((prev) => ({
+      audio: [...prev.audio, ...selectedAudioTokens.map((t) => t.id)],
+      source: [...prev.source, ...selectedSourceTokens.map((t) => t.id)],
+    }));
     setSelectedAudioTokens([]);
     setSelectedSourceTokens([]);
+  };
+
+  const isCreateAlignmentDisabled =
+    selectedAudioTokens.length === 0 || selectedSourceTokens.length === 0;
+
+  const handleTokenHover = (tokenId, tokenType) => {
+    const alignment = alignments.find(
+      (a) =>
+        (tokenType === "audio" &&
+          a.audioTokens.some((t) => t.id === tokenId)) ||
+        (tokenType === "source" &&
+          a.sourceTokens.some((t) => t.id === tokenId)),
+    );
+    setHoveredAlignment(alignment);
+    if (alignment && alignmentsRef.current) {
+      const alignmentElement = alignmentsRef.current.querySelector(
+        `[data-alignment-id="${alignment.id}"]`,
+      );
+      if (alignmentElement) {
+        alignmentElement.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }
+    }
+  };
+
+  const isTokenHighlighted = (tokenId, tokenType) => {
+    return (
+      hoveredAlignment &&
+      ((tokenType === "audio" &&
+        hoveredAlignment.audioTokens.some((t) => t.id === tokenId)) ||
+        (tokenType === "source" &&
+          hoveredAlignment.sourceTokens.some((t) => t.id === tokenId)))
+    );
   };
 
   return (
@@ -110,8 +153,16 @@ const AudioScriptureAlignmentPlayer = ({
             {audioTokens.map((token) => (
               <span
                 key={token.id}
-                className={`cursor-pointer ${activeAudioTokens.includes(token) ? "bg-yellow-200" : ""} ${selectedAudioTokens.includes(token) ? "bg-blue-200" : ""}`}
+                className={`cursor-pointer ${
+                  activeAudioTokens.includes(token) ? "bg-yellow-200" : ""
+                } ${selectedAudioTokens.includes(token) ? "bg-blue-200" : ""} ${
+                  alignedTokens.audio.includes(token.id)
+                    ? "bg-gray-200 cursor-not-allowed"
+                    : ""
+                } ${isTokenHighlighted(token.id, "audio") ? "bg-purple-200" : ""}`}
                 onClick={() => handleAudioTokenClick(token)}
+                onMouseEnter={() => handleTokenHover(token.id, "audio")}
+                onMouseLeave={() => setHoveredAlignment(null)}
               >
                 {token.value}
                 {token.skipSpaceAfter ? "" : " "}
@@ -125,8 +176,16 @@ const AudioScriptureAlignmentPlayer = ({
             {sourceTokens.map((token) => (
               <span
                 key={token.id}
-                className={`cursor-pointer ${selectedSourceTokens.includes(token) ? "bg-green-200" : ""}`}
+                className={`cursor-pointer ${
+                  selectedSourceTokens.includes(token) ? "bg-green-200" : ""
+                } ${
+                  alignedTokens.source.includes(token.id)
+                    ? "bg-gray-200 cursor-not-allowed"
+                    : ""
+                } ${isTokenHighlighted(token.id, "source") ? "bg-purple-200" : ""}`}
                 onClick={() => handleSourceTokenClick(token)}
+                onMouseEnter={() => handleTokenHover(token.id, "source")}
+                onMouseLeave={() => setHoveredAlignment(null)}
               >
                 {token.text}{" "}
               </span>
@@ -137,16 +196,25 @@ const AudioScriptureAlignmentPlayer = ({
       <div className="mt-4 flex justify-center">
         <button
           onClick={createAlignment}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center"
+          className={`bg-blue-500 text-white px-4 py-2 rounded flex items-center ${
+            isCreateAlignmentDisabled
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:bg-blue-600"
+          }`}
+          disabled={isCreateAlignmentDisabled}
         >
           <Check className="mr-2" /> Create Alignment
         </button>
       </div>
       <div className="mt-4">
         <h2 className="text-xl font-bold mb-2">Alignments</h2>
-        <div className="border p-2 h-40 overflow-y-auto">
+        <div className="border p-2 h-40 overflow-y-auto" ref={alignmentsRef}>
           {alignments.map((alignment) => (
-            <div key={alignment.id} className="mb-2 p-2 bg-gray-100 rounded">
+            <div
+              key={alignment.id}
+              className={`mb-2 p-2 rounded ${hoveredAlignment === alignment ? "bg-purple-100" : "bg-gray-100"}`}
+              data-alignment-id={alignment.id}
+            >
               <strong>Alignment {alignment.id}:</strong>
               <br />
               English: {alignment.audioTokens.map((t) => t.value).join(" ")}
