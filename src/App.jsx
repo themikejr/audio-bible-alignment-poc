@@ -45,7 +45,7 @@ function App() {
       <AudioScriptureAlignmentPlayer
         audioTokens={audioTokens}
         sourceTokens={sourceTokens}
-        audioSrc="../data/mark-sample.mp3"
+        audioSrc="mark-sample.mp3"
       />
     </div>
   );
