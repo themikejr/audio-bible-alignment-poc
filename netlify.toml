@@ -1,0 +1,8 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[[headers]]
+  for = "/mark-sample.mp3"
+  [headers.values]
+    Accept-Ranges = "bytes"
