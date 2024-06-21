@@ -73,14 +73,14 @@ const AudioScriptureAlignmentPlayer = ({
   };
 
   const createAlignment = () => {
-    if (selectedAudioTokens.length === 0 || selectedSourceTokens.length === 0) {
+    if (!selectedAudioTokens.length) {
       return;
     }
 
     const newAlignment = {
       id: alignments.length + 1,
-      audioTokens: selectedAudioTokens,
-      sourceTokens: selectedSourceTokens,
+      audioTokens: selectedAudioTokens.sort((a, b) => a.idx - b.idx),
+      sourceTokens: selectedSourceTokens.sort((a, b) => a.idx - b.idx),
     };
 
     setAlignments([...alignments, newAlignment]);
@@ -127,6 +127,32 @@ const AudioScriptureAlignmentPlayer = ({
     );
   };
 
+  const getTokenClassName = (token, isAudioToken) => {
+    let classes = "cursor-pointer ";
+
+    if (isAudioToken) {
+      if (selectedAudioTokens.includes(token)) {
+        classes += "bg-blue-200 "; // Selected state
+      } else if (alignedTokens.audio.includes(token.id)) {
+        classes += "bg-gray-200 cursor-not-allowed "; // Aligned state
+      } else if (activeAudioTokens.includes(token)) {
+        classes += "bg-yellow-200 "; // Current playback state
+      }
+    } else {
+      if (selectedSourceTokens.includes(token)) {
+        classes += "bg-green-200 "; // Selected state
+      } else if (alignedTokens.source.includes(token.id)) {
+        classes += "bg-gray-200 cursor-not-allowed "; // Aligned state
+      }
+    }
+
+    if (isTokenHighlighted(token.id, isAudioToken ? "audio" : "source")) {
+      classes += "bg-purple-200 "; // Highlighted state (on hover)
+    }
+
+    return classes.trim();
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-4">
       <audio
@@ -146,6 +172,7 @@ const AudioScriptureAlignmentPlayer = ({
           <SkipForward />
         </button>
       </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <h2 className="text-xl font-bold mb-2">English Audio Tokens</h2>
@@ -153,13 +180,7 @@ const AudioScriptureAlignmentPlayer = ({
             {audioTokens.map((token) => (
               <span
                 key={token.id}
-                className={`cursor-pointer ${
-                  activeAudioTokens.includes(token) ? "bg-yellow-200" : ""
-                } ${selectedAudioTokens.includes(token) ? "bg-blue-200" : ""} ${
-                  alignedTokens.audio.includes(token.id)
-                    ? "bg-gray-200 cursor-not-allowed"
-                    : ""
-                } ${isTokenHighlighted(token.id, "audio") ? "bg-purple-200" : ""}`}
+                className={getTokenClassName(token, true)}
                 onClick={() => handleAudioTokenClick(token)}
                 onMouseEnter={() => handleTokenHover(token.id, "audio")}
                 onMouseLeave={() => setHoveredAlignment(null)}
@@ -176,13 +197,7 @@ const AudioScriptureAlignmentPlayer = ({
             {sourceTokens.map((token) => (
               <span
                 key={token.id}
-                className={`cursor-pointer ${
-                  selectedSourceTokens.includes(token) ? "bg-green-200" : ""
-                } ${
-                  alignedTokens.source.includes(token.id)
-                    ? "bg-gray-200 cursor-not-allowed"
-                    : ""
-                } ${isTokenHighlighted(token.id, "source") ? "bg-purple-200" : ""}`}
+                className={getTokenClassName(token, false)}
                 onClick={() => handleSourceTokenClick(token)}
                 onMouseEnter={() => handleTokenHover(token.id, "source")}
                 onMouseLeave={() => setHoveredAlignment(null)}
@@ -193,6 +208,7 @@ const AudioScriptureAlignmentPlayer = ({
           </div>
         </div>
       </div>
+
       <div className="mt-4 flex justify-center">
         <button
           onClick={createAlignment}
@@ -206,6 +222,7 @@ const AudioScriptureAlignmentPlayer = ({
           <Check className="mr-2" /> Create Alignment
         </button>
       </div>
+
       <div className="mt-4">
         <h2 className="text-xl font-bold mb-2">Alignments</h2>
         <div className="border p-2 h-40 overflow-y-auto" ref={alignmentsRef}>
@@ -215,11 +232,16 @@ const AudioScriptureAlignmentPlayer = ({
               className={`mb-2 p-2 rounded ${hoveredAlignment === alignment ? "bg-purple-100" : "bg-gray-100"}`}
               data-alignment-id={alignment.id}
             >
-              <strong>Alignment {alignment.id}:</strong>
-              <br />
-              English: {alignment.audioTokens.map((t) => t.value).join(" ")}
-              <br />
-              Source: {alignment.sourceTokens.map((t) => t.text).join(" ")}
+              <div className="text-sm text-gray-500 mb-1">#{alignment.id}</div>
+              <div className="font-semibold">
+                {alignment.audioTokens.map((t) => t.value).join(" ")}
+              </div>
+              <div
+                className="font-semibold"
+                style={{ fontFamily: "SBL Hebrew, serif" }}
+              >
+                {alignment.sourceTokens.map((t) => t.text).join(" ")}
+              </div>{" "}
             </div>
           ))}
         </div>
