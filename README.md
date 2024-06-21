@@ -1,8 +1,14 @@
-# React + Vite
+# Aligning Audio Bibles, an exploration.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+_What might it be like to align an audio bible?_
 
-Currently, two official plugins are available:
+This exploration was produced entirely in collaboration with Claude Sonnet 3.5.
+It was ~60 minutes from idea to deployment.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+[Try the demo](https://audio-alignment-poc.netlify.app/).
+
+Tech stack:
+
+- React
+- Tailwind CSS
+- Vite
